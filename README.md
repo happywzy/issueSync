@@ -4,25 +4,28 @@
 github上面的issue同步到gitee上.
 
 #### 软件架构
-软件架构说明
+通过GitHub restful api获取仓库issue及评论
+
+通过gitee open API 将issue及评论同步
 
 
-#### 安装教程
+#### 安装使用
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+1.  启动工具
+```bash
+java -jar ggis-1.0.0-SNAPSHOT.jar
+```
 
-#### 使用说明
+2.  打开同步页面
+```json
+http://localhost:9090/sync
+```
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+3.  输入相关信息
 
-#### 参与贡献
+4.  等待issue同步完成,期间请勿操作,可以刷新gitee页面确认.
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+
+#### 工具截图
+![sync](/doc/sync.png)
 
