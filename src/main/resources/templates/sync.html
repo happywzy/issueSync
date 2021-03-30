@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
+<head th:fragment="header(title)">
+    <meta charset="UTF-8">
+    <title>ISSUE同步</title>
+    <link rel="stylesheet" th:href="@{/bootstrap.min.css}">
+    <script th:src="@{/jquery.min.js}"></script>
+    <script th:src="@{/bootstrap.min.js}"></script>
+</head>
+<body>
+<div class="container">
+    <div class="row top-buffer">
+        <h3>Github信息</h3>
+    </div>
+    <div class="row top-buffer">
+        <strong>github owner 仓库所属空间地址(企业、组织或个人)</strong></p>
+        <div class="col-lg-6">
+            <input type="text" class="form-control" id="githubOwner"/>
+        </div>
+
+        </p>
+    </div>
+    <div class="row top-buffer">
+        <strong>github repo 仓库名</strong></p>
+        <div class="col-lg-6">
+            <input type="text" class="form-control" id="githubRepo"/>
+        </div>
+
+        </p>
+    </div>
+    <div class="row top-buffer">
+        <strong>github token (获取方式：【用户】 - 【Settings】 - 【Developer settings】 - 【Personal access tokens】 - 【Generate new
+            token】)</strong></p>
+        <div class="col-lg-6">
+            <input type="text" class="form-control" id="githubToken"/>
+        </div>
+
+        </p>
+    </div>
+
+    <div class="row top-buffer">
+        <h3>Gitee信息</h3>
+    </div>
+    <div class="row top-buffer">
+        <strong>gitee owner 仓库所属空间地址(企业、组织或个人)</strong></p>
+        <div class="col-lg-6">
+            <input type="text" class="form-control" id="giteeOwner"/>
+        </div>
+
+        </p>
+    </div>
+    <div class="row top-buffer">
+        <strong>gitee repo 仓库名</strong></p>
+        <div class="col-lg-6">
+            <input type="text" class="form-control" id="giteeRepo"/>
+        </div>
+        </p>
+    </div>
+    <div class="row top-buffer">
+        <strong>gitee token (获取方式：【用户】 - 【设置】 - 【私人令牌】 - 【生成新令牌】)</strong></p>
+        <div class="col-lg-6">
+            <input type="text" class="form-control" id="giteeToken"/>
+        </div>
+
+        </p>
+    </div>
+
+    <div class="row top-buffer">
+        </p></p>
+        <button class="btn btn-default" onclick="ggisSync()" id="btn">同步</button>
+        </p><a id="result"></a>
+    </div>
+
+</div>
+
+<script type="text/javascript" th:inline="javascript">
+
+    function ggisSync() {
+        $("#result").html("<p style='color: red'>* 已触发issue同步,请刷新gitee仓库确认.</p>");
+        document.getElementById("btn").disabled = true;
+        var githubOwner = getById("githubOwner").value;
+        var githubRepo = getById("githubRepo").value;
+        var githubToken = getById("githubToken").value;
+        var giteeOwner = getById("giteeOwner").value;
+        var giteeRepo = getById("giteeRepo").value;
+        var giteeToken = getById("giteeToken").value;
+        var con = {
+            githubOwner: githubOwner,
+            githubRepo: githubRepo,
+            githubToken: githubToken,
+            giteeOwner: giteeOwner,
+            giteeRepo: giteeRepo,
+            giteeToken: giteeToken
+        };
+        var url = "/sync/start";
+        $.ajax({
+            type: "post",
+            url: url,
+            data: JSON.stringify(con),
+            contentType: "application/json",
+            success: function (result) {
+                if (result && result == 1) {
+                    $("#result").html("<p style='color: green'>* 同步成功!</p>");
+                }
+                if (result && result == 0) {
+                    $("#result").html("<p style='color: red'>* 输入有误!</p>");
+                }
+                if (result && result == 2) {
+                    $("#result").html("<p style='color: red'>* 后台报错,请查看日志!</p>");
+                }
+            }
+        })
+    }
+
+    function getById(id) {
+        return document.getElementById(id);
+    }
+</script>
+</body>
+</html>

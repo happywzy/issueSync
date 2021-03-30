@@ -2,6 +2,7 @@ package com.deri.ggis.entity;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.util.StringUtils;
 
 /**
  * @ClassName: Sync
@@ -20,4 +21,12 @@ public class Sync {
     private String giteeOwner;
     private String giteeRepo;
     private String giteeToken;
+
+    public boolean valid() {
+        if (StringUtils.isEmpty(githubOwner) || StringUtils.isEmpty(githubRepo) || StringUtils.isEmpty(githubToken) ||
+                StringUtils.isEmpty(giteeOwner) || StringUtils.isEmpty(giteeRepo) || StringUtils.isEmpty(giteeToken) ) {
+            return false;
+        }
+        return true;
+    }
 }

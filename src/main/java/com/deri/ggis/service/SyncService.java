@@ -40,36 +40,45 @@ public class SyncService {
     @Autowired
     RestTemplate restTemplate;
 
-    public void syncIssue(Sync sync) throws InterruptedException {
-        Map<Integer, CompleteIssue> issueMap = getCompleteIssues(sync.getGithubOwner(), sync.getGithubRepo(), sync.getGithubToken());
-        log.info("在Github-{}-{}上共收集{}了条issues.", sync.getGithubOwner(), sync.getGithubRepo(), issueMap.size());
-        for (CompleteIssue ci : issueMap.values()) {
-            GiteeIssue giteeIssue = new GiteeIssue();
-            giteeIssue.setAccess_token(sync.getGiteeToken());
-            giteeIssue.setOwner(sync.getGiteeOwner());
-            giteeIssue.setRepo(sync.getGiteeRepo());
-            giteeIssue.setBody(generateIssueBody(ci));
-            giteeIssue.setTitle(ci.getIssue().getTitle());
-            giteeIssue.setLabels(generateLabels(ci));
-            String number = addIssue(giteeIssue);
-            if (ci.getIssue().getComments() > 0) {
-                for (Comment comment : ci.getComments()) {
-                    GiteeComment giteeComment = new GiteeComment();
-                    giteeComment.setAccess_token(sync.getGiteeToken());
-                    giteeComment.setNumber(number);
-                    giteeComment.setOwner(sync.getGiteeOwner());
-                    giteeComment.setRepo(sync.getGiteeRepo());
-                    giteeComment.setBody(generateCommentBody(comment));
-                    addComment(giteeComment);
+    public int syncIssue(Sync sync) {
+        if (!sync.valid()) {
+            return 0;
+        }
+        try {
+            Map<Integer, CompleteIssue> issueMap = getCompleteIssues(sync.getGithubOwner(), sync.getGithubRepo(), sync.getGithubToken());
+            log.info("在Github-{}-{}上共收集{}了条issues.", sync.getGithubOwner(), sync.getGithubRepo(), issueMap.size());
+            for (CompleteIssue ci : issueMap.values()) {
+                GiteeIssue giteeIssue = new GiteeIssue();
+                giteeIssue.setAccess_token(sync.getGiteeToken());
+                giteeIssue.setOwner(sync.getGiteeOwner());
+                giteeIssue.setRepo(sync.getGiteeRepo());
+                giteeIssue.setBody(generateIssueBody(ci));
+                giteeIssue.setTitle(ci.getIssue().getTitle());
+                giteeIssue.setLabels(generateLabels(ci));
+                String number = addIssue(giteeIssue);
+                if (ci.getIssue().getComments() > 0) {
+                    for (Comment comment : ci.getComments()) {
+                        GiteeComment giteeComment = new GiteeComment();
+                        giteeComment.setAccess_token(sync.getGiteeToken());
+                        giteeComment.setNumber(number);
+                        giteeComment.setOwner(sync.getGiteeOwner());
+                        giteeComment.setRepo(sync.getGiteeRepo());
+                        giteeComment.setBody(generateCommentBody(comment));
+                        addComment(giteeComment);
+                    }
+                }
+                if ("closed".equalsIgnoreCase(ci.getIssue().getState())) {
+                    giteeIssue.setNumber(number);
+                    giteeIssue.setState("closed");
+                    closeIssue(giteeIssue);
                 }
             }
-            if ("closed".equalsIgnoreCase(ci.getIssue().getState())) {
-                giteeIssue.setNumber(number);
-                giteeIssue.setState("closed");
-                closeIssue(giteeIssue);
-            }
+            log.info("issues同步到Gitee完成.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 2;
         }
-        log.info("issues同步到Gitee完成.");
+        return 1;
     }
 
     private String generateLabels(CompleteIssue ci) {
@@ -181,7 +190,7 @@ public class SyncService {
         return number;
     }
 
-    public Map<Integer, CompleteIssue> getCompleteIssues(String owner, String repo, String token) throws InterruptedException {
+    public Map<Integer, CompleteIssue> getCompleteIssues(String owner, String repo, String token) {
         Map<Integer, CompleteIssue> completeIssues = new HashMap<>();
         List<Issue> issues = getIssues(owner, repo, token);
         for (Issue issue : issues) {
@@ -206,7 +215,7 @@ public class SyncService {
         return comments;
     }
 
-    public List<Issue> getIssues(String owner, String repo, String token) throws InterruptedException {
+    public List<Issue> getIssues(String owner, String repo, String token) {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Accept", "application/vnd.github.v3+json");
         List<Issue> issues = new ArrayList<>();

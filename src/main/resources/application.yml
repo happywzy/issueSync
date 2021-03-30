@@ -1,0 +1,15 @@
+server:
+  port: 9090
+  servlet:
+    context-path:
+  tomcat:
+    uri-encoding: UTF-8
+
+spring:
+  thymeleaf:
+    cache: false
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
