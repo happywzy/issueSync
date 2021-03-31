@@ -16,12 +16,9 @@ import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +44,7 @@ public class SyncService {
         try {
             Map<Integer, CompleteIssue> issueMap = getCompleteIssues(sync.getGithubOwner(), sync.getGithubRepo(), sync.getGithubToken());
             log.info("在Github-{}-{}上共收集{}了条issues.", sync.getGithubOwner(), sync.getGithubRepo(), issueMap.size());
+            int count = 1;
             for (CompleteIssue ci : issueMap.values()) {
                 GiteeIssue giteeIssue = new GiteeIssue();
                 giteeIssue.setAccess_token(sync.getGiteeToken());
@@ -56,6 +54,7 @@ public class SyncService {
                 giteeIssue.setTitle(ci.getIssue().getTitle());
                 giteeIssue.setLabels(generateLabels(ci));
                 String number = addIssue(giteeIssue);
+                log.info("已完成第 {} 条issue同步, issue 编号: {} , issue 标题: {}", count, number, ci.getIssue().getTitle());
                 if (ci.getIssue().getComments() > 0) {
                     for (Comment comment : ci.getComments()) {
                         GiteeComment giteeComment = new GiteeComment();
@@ -72,6 +71,7 @@ public class SyncService {
                     giteeIssue.setState("closed");
                     closeIssue(giteeIssue);
                 }
+                count++;
             }
             log.info("issues同步到Gitee完成.");
         } catch (Exception e) {
@@ -122,17 +122,16 @@ public class SyncService {
             addEntity(httpPatch, JSON.toJSONString(giteeIssue));
             httpClient.execute(httpPatch);
         } catch (Exception e) {
-        } finally {
-            if (httpClient != null) {
-                try {
-                    httpClient.close();
-                } catch (IOException ioe) {
-                }
+            log.error("issue 编号: {} , issue 标题: {} ,关闭失败, 报错信息: {} ", giteeIssue.getNumber(), giteeIssue.getTitle(), e);
+        }finally {
+            try {
+                httpClient.close();
+            } catch (IOException e) {
             }
         }
     }
 
-    public HttpEntityEnclosingRequestBase addEntity(HttpEntityEnclosingRequestBase http, String json) throws UnsupportedEncodingException {
+    public HttpEntityEnclosingRequestBase addEntity(HttpEntityEnclosingRequestBase http, String json) {
         http.addHeader("Content-Type", "application/json;charset=UTF-8");
         http.addHeader("Accept", "application/json");
         http.addHeader("User-Agent", "ggis");
@@ -150,12 +149,11 @@ public class SyncService {
             addEntity(httpPost, JSON.toJSONString(giteeComment));
             httpClient.execute(httpPost);
         } catch (Exception e) {
-        } finally {
-            if (httpClient != null) {
-                try {
-                    httpClient.close();
-                } catch (IOException ioe) {
-                }
+            log.error("issue 编号: {} , 评论内容: {} ,同步评论失败, 报错信息: {} ", giteeComment.getNumber(), giteeComment.getBody(), e);
+        }finally {
+            try {
+                httpClient.close();
+            } catch (IOException e) {
             }
         }
     }
@@ -173,16 +171,15 @@ public class SyncService {
             String tmp = EntityUtils.toString(response.getEntity(), "UTF-8");
             number = JSON.parseObject(tmp, GiteeAddIssueResponse.class).getNumber();
         } catch (Exception e) {
+            log.error("issue 编号: {} , issue 标题: {} ,同步失败, 报错信息: {} ", giteeIssue.getNumber(), giteeIssue.getTitle(), e);
         } finally {
+            try {
+                httpClient.close();
+            } catch (IOException e) {
+            }
             if (response != null) {
                 try {
                     response.close();
-                } catch (IOException ioe) {
-                }
-            }
-            if (httpClient != null) {
-                try {
-                    httpClient.close();
                 } catch (IOException ioe) {
                 }
             }
@@ -200,7 +197,6 @@ public class SyncService {
                 completeIssue.setComments(getComment(owner, repo, token, issue.getNumber()));
             }
             completeIssues.put(issue.getNumber(), completeIssue);
-//            Thread.sleep(100);
         }
         return completeIssues;
     }
@@ -231,7 +227,6 @@ public class SyncService {
                 page++;
                 issues.addAll(tmp);
             }
-//            Thread.sleep(1000);
         }
         return issues;
     }

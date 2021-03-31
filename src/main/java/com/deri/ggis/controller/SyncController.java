@@ -33,4 +33,5 @@ public class SyncController {
     int start(@RequestBody Sync sync) {
         return syncService.syncIssue(sync);
     }
+
 }
