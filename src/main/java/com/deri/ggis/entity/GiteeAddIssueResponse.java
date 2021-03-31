@@ -14,4 +14,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class GiteeAddIssueResponse {
     private String number;
+    private String description;
 }

@@ -123,7 +123,7 @@ public class SyncService {
             httpClient.execute(httpPatch);
         } catch (Exception e) {
             log.error("issue 编号: {} , issue 标题: {} ,关闭失败, 报错信息: {} ", giteeIssue.getNumber(), giteeIssue.getTitle(), e);
-        }finally {
+        } finally {
             try {
                 httpClient.close();
             } catch (IOException e) {
@@ -150,7 +150,7 @@ public class SyncService {
             httpClient.execute(httpPost);
         } catch (Exception e) {
             log.error("issue 编号: {} , 评论内容: {} ,同步评论失败, 报错信息: {} ", giteeComment.getNumber(), giteeComment.getBody(), e);
-        }finally {
+        } finally {
             try {
                 httpClient.close();
             } catch (IOException e) {
@@ -169,7 +169,12 @@ public class SyncService {
             addEntity(httpPost, JSON.toJSONString(giteeIssue));
             response = httpClient.execute(httpPost);
             String tmp = EntityUtils.toString(response.getEntity(), "UTF-8");
-            number = JSON.parseObject(tmp, GiteeAddIssueResponse.class).getNumber();
+            GiteeAddIssueResponse response1 = JSON.parseObject(tmp, GiteeAddIssueResponse.class);
+            if (response1.getNumber() != null) {
+                number = response1.getNumber();
+            } else {
+                log.error("issue 标题: {} ,同步失败, 报错信息: {} ", giteeIssue.getTitle(), response1.getDescription());
+            }
         } catch (Exception e) {
             log.error("issue 编号: {} , issue 标题: {} ,同步失败, 报错信息: {} ", giteeIssue.getNumber(), giteeIssue.getTitle(), e);
         } finally {
